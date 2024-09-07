@@ -21,7 +21,7 @@ const initializePayment = async (req, res, next) => {
     const params = {
         storeID: process.env.SSLC_STORE_ID,
         storePassword: process.env.SSLC_STORE_PASSWORD,
-        productionMode: process.env.PRODUCTION,
+        productionMode: process.env.ENVIRONMENT === 'production',
     }
 
     const data = {
@@ -33,22 +33,21 @@ const initializePayment = async (req, res, next) => {
     // TODO: metadata
 
     const sslcz = new SSLCommerzPayment(params.storeID, params.storePassword, params.productionMode);
-    
     sslcz.init(data).then(response => {
-		logger.info('sslcz response: ', response);
         assert.equal(response.status, 'SUCCESS');
 
         // Get the payment gateway URL
         let GatewayPageURL = response.GatewayPageURL;
-        res.send({ url: GatewayPageURL });
 
-        // // Insert order details into the database
+        // Insert order details into the database
         // const order = { ...planDetails, tran_id, status: 'pending'};
         // const result = ordersCollection.insertOne(order);
 
         // Redirect the user to payment gateway
-        res.redirect(GatewayPageURL)
-        console.log('Redirecting to: ', GatewayPageURL)
+        // res.redirect(GatewayPageURL)
+
+		// Send the payment gateway URL to the client
+        res.send({ url: GatewayPageURL });
     }).catch(error => {
         console.log(error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(ReasonPhrases.INTERNAL_SERVER_ERROR);
